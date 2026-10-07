@@ -8,7 +8,8 @@ import com.example.digitalbookmark.ui.screens.booklist.BookListScreen
 import com.example.digitalbookmark.ui.screens.addbook.AddBookScreen
 import com.example.digitalbookmark.viewmodel.BookViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.digitalbookmark.ui.screens.booklist.EditBookScreen
+import com.example.digitalbookmark.ui.screens.editbook.EditBookScreen
+
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
