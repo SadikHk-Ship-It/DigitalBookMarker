@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [BookEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class BookDatabase : RoomDatabase() {
@@ -21,7 +21,8 @@ abstract class BookDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context.applicationContext,
                     BookDatabase::class.java, "book_db")
-                    .build().also { INSTANCE = it}
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
         }
     }

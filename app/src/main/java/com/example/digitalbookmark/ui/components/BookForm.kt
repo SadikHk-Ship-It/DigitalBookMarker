@@ -2,6 +2,7 @@ package com.example.digitalbookmark.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -9,6 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,10 +24,44 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.example.digitalbookmark.data.local.BookEntity
+import com.example.digitalbookmark.data.local.BookType
+import com.example.digitalbookmark.data.local.parseTimestamp
 import com.example.digitalbookmark.ui.screens.booklist.StatusDropdown
 import com.example.digitalbookmark.ui.theme.Spacing
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TypeDropdown(
+    selected: BookType,
+    onSelected: (BookType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selected.label,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Type") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            BookType.values().forEach { t ->
+                DropdownMenuItem(
+                    text = { Text(t.label) },
+                    onClick = { onSelected(t); expanded = false }
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun BookForm(
@@ -41,6 +80,18 @@ fun BookForm(
     }
     var status by remember(initial?.id) { mutableStateOf(initial?.status ?: "Reading") }
     var imageUri by remember(initial?.id) { mutableStateOf(initial?.imageUri ?: "") }
+    var type by remember(initial?.id) { mutableStateOf(initial?.bookType ?: BookType.BOOK) }
+
+    val startSeconds = initial?.timestampSeconds ?: 0L
+    var hours by remember(initial?.id) {
+        mutableStateOf((startSeconds / 3600).takeIf { it > 0 }?.toString() ?: "")
+    }
+    var minutes by remember(initial?.id) {
+        mutableStateOf(((startSeconds % 3600) / 60).takeIf { it > 0 }?.toString() ?: "")
+    }
+    var seconds by remember(initial?.id) {
+        mutableStateOf((startSeconds % 60).takeIf { it > 0 }?.toString() ?: "")
+    }
 
     Column(
         modifier = modifier
@@ -61,14 +112,52 @@ fun BookForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = pageNumber,
-            onValueChange = { pageNumber = it.filter(Char::isDigit).take(6) },
-            label = { Text("Page number") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        TypeDropdown(
+            selected = type,
+            onSelected = { type = it },
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (type.usesTimestamp) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = hours,
+                    onValueChange = { hours = it.filter(Char::isDigit).take(3) },
+                    label = { Text("Hours") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = minutes,
+                    onValueChange = { minutes = it.filter(Char::isDigit).take(2) },
+                    label = { Text("Min") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = seconds,
+                    onValueChange = { seconds = it.filter(Char::isDigit).take(2) },
+                    label = { Text("Sec") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            OutlinedTextField(
+                value = pageNumber,
+                onValueChange = { pageNumber = it.filter(Char::isDigit).take(6) },
+                label = { Text("Page number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         OutlinedTextField(
             value = rating,
@@ -100,20 +189,25 @@ fun BookForm(
             onClick = {
                 val pages = pageNumber.toIntOrNull() ?: 0
                 val stars = (rating.toIntOrNull() ?: 0).coerceIn(0, 10)
+                val timeSeconds = parseTimestamp(hours, minutes, seconds)
                 val book = initial?.copy(
                     title = title.trim(),
                     pageNumber = pages,
                     review = review,
                     rating = stars,
                     imageUri = imageUri,
-                    status = status
+                    status = status,
+                    type = type.name,
+                    timestampSeconds = timeSeconds
                 ) ?: BookEntity(
                     title = title.trim(),
                     pageNumber = pages,
                     review = review,
                     rating = stars,
                     imageUri = imageUri,
-                    status = status
+                    status = status,
+                    type = type.name,
+                    timestampSeconds = timeSeconds
                 )
                 onSave(book)
             },

@@ -13,10 +13,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
@@ -62,10 +64,25 @@ fun BookListScreen(navController: NavHostController, viewModel: BookViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Library") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("My Library") },
+                actions = {
+                    IconButton(onClick = { navController.navigate("settings") }) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { navController.navigate("add") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Add book") }
             )
@@ -114,7 +131,7 @@ fun BookListScreen(navController: NavHostController, viewModel: BookViewModel) {
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    // Ekstra bunn-padding så siste kort ikke havner bak FAB
+                    // Extra bottom padding so the last card doesn't end up behind the FAB
                     contentPadding = PaddingValues(
                         start = Spacing.md, end = Spacing.md,
                         top = Spacing.md, bottom = 88.dp

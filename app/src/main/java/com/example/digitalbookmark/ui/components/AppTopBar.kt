@@ -17,6 +17,7 @@ fun AppTopBar(title: String, onBack: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+
             }
         }
     )

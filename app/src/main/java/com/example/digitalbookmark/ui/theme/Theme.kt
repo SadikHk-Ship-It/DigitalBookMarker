@@ -46,12 +46,17 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun DigitalBookMarkTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Av som standard, slik at appen alltid har sin egen konsistente palett.
+    settings: ThemeSettings = ThemeSettings(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val darkTheme = when (settings.mode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+
+    val baseScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -61,7 +66,7 @@ fun DigitalBookMarkTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = baseScheme.withOverrides(settings.overrides),
         typography = Typography,
         content = content
     )
